@@ -75,7 +75,7 @@ func (c *Client) Evaluate(ctx context.Context, item ItemContext) (Result, error)
 	}
 
 	systemPrompt := "你是一个Web3资讯分析助手。判断资讯是否属于以下类型：" +
-		"1)重要政策或监管动向；2)行业重点项目或重大落地进展；3)创新新兴赛道或生态热点；4)RWA或支付赛道相关；5)投融资与机构动作；6)安全事件。" +
+		"1)重要政策或监管动向；2)行业重点项目或重大落地进展；3)创新新兴赛道或生态热点；4)RWA或支付赛道相关。" +
 		"只返回JSON，字段：relevant(bool)，category(上述类别之一)，reason(简要中文理由)，tags(字符串数组，包含涉及的链/机构/赛道)。"
 	userPrompt := fmt.Sprintf("标题: %s\n链接: %s\n发布时间: %s\n摘要: %s\n请输出JSON。",
 		item.Title,
