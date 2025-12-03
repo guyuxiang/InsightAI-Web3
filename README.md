@@ -4,9 +4,10 @@ Golang 服务轮询 TechFlow 的 RSS (`https://www.techflowpost.com/rss.aspx`)�
 
 - 重要政策/监管动向
 - 行业重点项目、重大落地
-- 创新/新兴赛道
+- 创新新兴赛道或生态热点
 - RWA 与支付赛道
-- 单笔融资金额超过 1000 万美元
+- 投融资与机构动作
+- 安全事件
 
 符合条件的资讯存储在 MySQL 中，并通过 `/items` 接口返回。
 

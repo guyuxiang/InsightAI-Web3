@@ -1,8 +1,10 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -12,6 +14,8 @@ import (
 	"aiweb3news/internal/rss"
 	"aiweb3news/internal/storage"
 )
+
+const wecomWebhookURL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=74cb55e7-0430-400a-b3e2-2e8d05d8cb06"
 
 // Service ties together RSS polling and AI analysis.
 type Service struct {
@@ -108,6 +112,10 @@ func (s *Service) pollOnce(ctx context.Context) {
 			s.logger.Printf("store analysis failed for %s: %v", item.Title, err)
 			continue
 		}
+
+		if result.Relevant {
+			s.notifyWebhook(ctx, item, result)
+		}
 	}
 }
 
@@ -133,5 +141,38 @@ func (s *Service) itemsHandler(w http.ResponseWriter, r *http.Request) {
 		Items: items,
 	}); err != nil {
 		s.logger.Printf("write items response failed: %v", err)
+	}
+}
+
+func (s *Service) notifyWebhook(ctx context.Context, item rss.Item, result analysis.Result) {
+	payload := map[string]any{
+		"msgtype": "text",
+		"text": map[string]string{
+			"content": fmt.Sprintf("%s\n分类: %s\nAI分析: %s\n链接: %s", item.Title, result.Category, result.Reason, item.Link),
+		},
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		s.logger.Printf("marshal webhook payload failed: %v", err)
+		return
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, wecomWebhookURL, bytes.NewReader(body))
+	if err != nil {
+		s.logger.Printf("build webhook request failed: %v", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		s.logger.Printf("send webhook failed: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		s.logger.Printf("webhook returned non-2xx status: %s", resp.Status)
 	}
 }
